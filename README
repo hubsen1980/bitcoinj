@@ -1,4 +1,8 @@
-This is my patch queue for the bitcoinj project (hosted at Google Code in Subversion)
+This is my patch queue for the bitcoinj project 
+(hosted at Google Code in Subversion)
+
+BitCoinJ implements the native BitCoin P2P protocol in Java.
+http://code.google.com/p/bitcoinj/
 
 There are two branches:
 
@@ -6,5 +10,11 @@ There are two branches:
    * "thilo" contains my patches
    
 
-BitCoinJ implements the native BitCoin P2P protocol in Java.
-http://code.google.com/p/bitcoinj/
+Everything that I commit under the "thilo" branch is to be considered
+a "Contribution submitted to Google" in the context of the
+Google Individual Contributor License Agreement ("Agreement").
+
+http://code.google.com/legal/individual-cla-v1.0.html
+
+This does not include other branches or code from contributors
+other than myself, unless otherwise indicated.
