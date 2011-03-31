@@ -1,12 +1,10 @@
-To get started, ensure you have the latest JDK installed and then just run "ant".
+This is my patch queue for the bitcoinj project (hosted at Google Code in Subversion)
 
-- A JAR will be placed in dist/
-- JavaDocs will be placed in docs/
-- Unit tests will be run
+There are two branches:
 
-Now ensure you're running a BitCoin node locally and run the example app:
+   * "master" tracks the official subversion repository 
+   * "thilo" contains my patches
+   
 
-   cd out
-   java com.google.bitcoin.examples.PingService
-
-It will print a BitCoin address. If you send coins to it, you should get them back a few minutes later when a block is solved.
+BitCoinJ implements the native BitCoin P2P protocol in Java.
+http://code.google.com/p/bitcoinj/
