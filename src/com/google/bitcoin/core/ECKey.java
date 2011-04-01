@@ -83,14 +83,14 @@ public class ECKey implements Serializable {
     public static ECKey fromASN1(byte[] asn1privkey) {
         return new ECKey(extractPrivateKeyFromASN1(asn1privkey));
     }
-    
+
     /**
-     * Output this ECKey as an ASN.1 encoded private key, as understood by OpenSSL or used by the BitCoin reference implementation
-     * in its wallet storage format.
+     * Output this ECKey as an ASN.1 encoded private key, as understood by OpenSSL or used by the BitCoin reference
+     * implementation in its wallet storage format.
      */
     public byte[] toASN1(){
-    	 try {
-    		 ByteArrayOutputStream baos = new ByteArrayOutputStream(400);
+         try {
+             ByteArrayOutputStream baos = new ByteArrayOutputStream(400);
              ASN1OutputStream encoder = new ASN1OutputStream(baos);
 
              // ASN1_SEQUENCE(EC_PRIVATEKEY) = {
