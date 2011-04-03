@@ -17,12 +17,14 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.bouncycastle.crypto.digests.RIPEMD160Digest;
+import com.google.bitcoin.bouncycastle.util.encoders.Hex;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 /**
  * A collection of various utility methods that are helpful for working with the BitCoin protocol.
@@ -136,6 +138,15 @@ public class Utils {
             buf.append(s);
         }
         return buf.toString();
+    }
+    
+    /** Returns the given hex-encoded String as a 32 byte array
+     */
+    public static byte[] hexStringTo32Bytes(String hex){
+    	byte[] bytes = Hex.decode(hex);
+    	if (bytes.length == 32)
+    		return bytes;
+    	return Arrays.copyOf(bytes, 32);
     }
     
 
