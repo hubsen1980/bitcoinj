@@ -124,4 +124,8 @@ public class TransactionInput extends Message implements Serializable {
             throw new RuntimeException(e);
         }
     }
+    
+    public TransactionOutPoint getOutPoint(){
+    	return outpoint;
+    }
 }

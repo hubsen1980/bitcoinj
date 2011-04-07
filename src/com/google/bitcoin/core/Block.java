@@ -365,9 +365,37 @@ public class Block extends Message {
     public byte[] getMerkleRoot() {
         if (merkleRoot == null)
             merkleRoot = calculateMerkleRoot();
+        // TODO: this is returning a pointer into our own data, security problem?
         return merkleRoot;
     }
+    
+    /** Returns the merkle root in the form seen
+     * on the block explorer, calculating it from transactions if necessary. */
+    public String getMerkleRootAsString() {
+        return Utils.bytesToHexString(getMerkleRoot());
+    }
 
+    /** Returns the merkle tree in big endian form, calculating it from transactions. */
+    public List<byte[]> getMerkleTree(){
+    	List<byte[]> newCopy = buildMerkleTree();
+    	Collections.reverse(newCopy);
+    	return Collections.unmodifiableList(newCopy);
+    }
+    
+    
+    /** Returns the merkle tree in the form seen
+     * on the block explorer,  calculating it from transactions. */
+    public List<String> getMerkleTreeAsStrings(){
+    	List<byte[]> tree = buildMerkleTree();
+    	List<String> list = new ArrayList<String>(tree.size());
+    	for (byte[] t: tree){
+    		list.add(Utils.bytesToHexString(t));
+    	}
+    	Collections.reverse(list);
+    	return Collections.unmodifiableList(list);
+    }
+    
+    
     /** Exists only for unit testing. */
     void setMerkleRoot(byte[] value) {
         merkleRoot = value;
@@ -383,6 +411,16 @@ public class Block extends Message {
         // Force a recalculation next time the values are needed.
         merkleRoot = null;
         hash = null;
+    }
+    /**
+     * Returns an unmodifiable list of the transactions in this block.
+     * Null-Safe: Never returns null (returns an empty list if there are no transactions)
+     */
+    public List<Transaction> getTransactions(){
+    	if (transactions == null || transactions.isEmpty())
+    		return Collections.emptyList();
+    	
+    	return Collections.unmodifiableList(transactions);
     }
 
     /** Returns the version of the block data structure as defined by the BitCoin protocol. */
@@ -410,6 +448,14 @@ public class Block extends Message {
         this.hash = null;
     }
 
+    /**
+     * Returns the size of this block (in bytes in the binary wire format)
+     */
+    public int getSize(){
+    	return getMessageSize();
+    }
+    
+    
     /**
      * Returns the difficulty of the proof of work that this block should meet encoded in compact form. The
      * {@link BlockChain} verifies that this is not too easy by looking at the length of the chain when the block is

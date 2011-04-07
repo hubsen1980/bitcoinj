@@ -79,6 +79,14 @@ public class Transaction extends Message implements Serializable {
     }
 
     /**
+     * Returns a read-only list of the inputs of this transaction.
+     */
+    public List<TransactionOutput> getOutputs() {
+        return Collections.unmodifiableList(outputs);
+    }
+    
+    
+    /**
      * Returns the transaction hash as you see them in the block explorer.
      */
     public byte[] getHash() {
@@ -385,5 +393,20 @@ public class Transaction extends Message implements Serializable {
     @Override
     public int hashCode() {
         return Arrays.hashCode(hash);
+    }
+    
+    /**
+     * Returns the size of this transaction (in bytes in the binary wire format)
+     */
+    public int getSize(){
+    	return getMessageSize();
+    }
+    
+    public long getLockTime(){
+    	return lockTime;
+    }
+    
+    public long getVersion(){
+    	return version;
     }
 }

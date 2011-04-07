@@ -107,4 +107,26 @@ public class TransactionOutPoint extends Message implements Serializable {
     byte[] getConnectedPubKeyHash() throws ScriptException {
         return getConnectedOutput().getScriptPubKey().getPubKeyHash();
     }
+    
+    /**
+     * the hash of the transaction to which we refer.  
+     */
+    public String getHashAsString() {
+        return Utils.bytesToHexString(getHash());
+    }
+
+    /**
+     * the hash of the transaction to which we refer.  
+     */
+  
+    public byte[] getHash() {
+        return hash;
+    }
+    
+    /**
+     * Which output in the source transaction  we are talking about.
+     */
+    public long getIndex(){
+    	return index;
+    }
 }
