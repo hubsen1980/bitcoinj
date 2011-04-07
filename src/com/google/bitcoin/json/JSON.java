@@ -102,7 +102,9 @@ public class JSON {
 			JSONArray out = json.getJSONArray("out");
 			for (int i = 0; i < out.length(); i++) {
 				JSONObject tout = out.getJSONObject(i);
-				Utils.uint64ToByteStreamLE(new BigDecimal(tout.getString("value")).movePointRight(9).toBigIntegerExact(), stream);
+				Utils.uint64ToByteStreamLE(new BigDecimal(tout
+						.getString("value")).movePointRight(9)
+						.toBigIntegerExact(), stream);
 				if (tout.has("scriptPubKey")) {
 					String scriptSig = tout.getString("scriptPubKey");
 					byte[] scriptBytes = scriptSig.getBytes(ascii);
@@ -114,5 +116,27 @@ public class JSON {
 			}
 		}
 		uint32ToByteStreamLE(json.getLong("lock_time"), stream);
+	}
+
+	public static JSONObject toJSON(Block block) {
+		JSONObject r = new JSONObject();
+		try {
+			r.put("hash", block.getHashAsString());
+			r.put("ver", block.getVersion());
+			r.put("prev_block", Utils
+					.bytesToHexString(block.getPrevBlockHash()));
+			r.put("mrkl_root", Utils.bytesToHexString(block.getMerkleRoot()));
+			r.put("time", block.getTime());
+			r.put("nonce", block.getNonce());
+			// r.put("n_tx", block.getTransactions().size());
+			// r.put("size", block.getSize());
+			// r.put("mrkl_tree", block.getMerkleTree());
+		} catch (JSONException e) {
+			// should not happen
+			throw new RuntimeException(
+					"failed to create JSON encoding for block "
+							+ block.getHashAsString(), e);
+		}
+		return r;
 	}
 }
