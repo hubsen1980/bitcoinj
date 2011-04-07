@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -15,6 +16,10 @@ import org.json.JSONObject;
 import com.google.bitcoin.core.Block;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.ProtocolException;
+import com.google.bitcoin.core.ScriptException;
+import com.google.bitcoin.core.Transaction;
+import com.google.bitcoin.core.TransactionInput;
+import com.google.bitcoin.core.TransactionOutput;
 import com.google.bitcoin.core.Utils;
 import com.google.bitcoin.core.VarInt;
 
@@ -125,17 +130,71 @@ public class JSON {
 			r.put("ver", block.getVersion());
 			r.put("prev_block", Utils
 					.bytesToHexString(block.getPrevBlockHash()));
-			r.put("mrkl_root", Utils.bytesToHexString(block.getMerkleRoot()));
+			r.put("mrkl_root", block.getMerkleRootAsString());
 			r.put("time", block.getTime());
 			r.put("nonce", block.getNonce());
-			// r.put("n_tx", block.getTransactions().size());
-			// r.put("size", block.getSize());
-			// r.put("mrkl_tree", block.getMerkleTree());
+			r.put("bits", block.getDifficultyTarget());
+			List<Transaction> tx = block.getTransactions();
+			r.put("n_tx", tx.size());
+			JSONArray txs = new JSONArray();
+			for (Transaction t : tx) {
+				txs.put(toJSON(t));
+			}
+			r.put("tx", txs);
+			r.put("size", block.getSize());
+			r.put("mrkl_tree", new JSONArray(block.getMerkleTreeAsStrings()));
 		} catch (JSONException e) {
 			// should not happen
 			throw new RuntimeException(
 					"failed to create JSON encoding for block "
 							+ block.getHashAsString(), e);
+		}
+		return r;
+	}
+
+	public static JSONObject toJSON(Transaction t) {
+		JSONObject r = new JSONObject();
+		try {
+			r.put("hash", t.getHashAsString());
+			r.put("ver", t.getVersion());
+			r.put("lock_time", t.getLockTime());
+			r.put("size", t.getSize());
+			List<TransactionInput> in = t.getInputs();
+			r.put("vin_sz", in.size());
+			JSONArray jin = new JSONArray();
+			for (TransactionInput i: in){
+				JSONObject o = new JSONObject();
+				JSONObject po = new JSONObject();
+				po.put("hash", i.getOutPoint().getHashAsString());
+				po.put("n", i.getOutPoint().getIndex());
+				o.put("prev_out", po);
+				if (i.isCoinBase()){
+					o.put("coinbase", i.getScriptSig());
+				}else{
+					o.put("scriptSig", i.getScriptSig());
+				}
+				jin.put(o);
+			}
+			r.put("in", jin);
+			List<TransactionOutput> out = t.getOutputs();
+			JSONArray jout = new JSONArray();
+			for (TransactionOutput o: out){
+				JSONObject j = new JSONObject();
+				j.put("value", new BigDecimal(o.getValue()).movePointLeft(9).toPlainString());
+				j.put("scriptPubKey", o.getScriptPubKey().toString());
+				jout.put(j);
+			}
+			r.put("out", jout);
+			r.put("vout_sz", out.size());
+		} catch (JSONException e) {
+			// should not happen
+			throw new RuntimeException(
+					"failed to create JSON encoding for transaction "
+							+ t.getHashAsString(), e);
+		} catch (ScriptException e) {
+			throw new RuntimeException(
+					"failed to create JSON encoding for transaction "
+							+ t.getHashAsString(), e);
 		}
 		return r;
 	}
