@@ -33,10 +33,18 @@ import java.util.Arrays;
  */
 @SuppressWarnings({"SameParameterValue"})
 public class Utils {
-    /** How many nanocoins there are in a BitCoin. */
-    public static final BigInteger COIN = new BigInteger("1000000000", 10);
-    /** How many nanocoins there are in 0.01 BitCoins. */
-    public static final BigInteger CENT = new BigInteger("10000000", 10);
+    /** How many "nanocoins" there are in a BitCoin.
+     *  A nanocoin is the smallest unit that can be transferred using BitCoin.
+     *  The term nanocoin is very misleading, though, because there are only 100 million
+     *  of them in a coin (whereas one would expect 1 billion.  */
+	
+    public static final BigInteger COIN = new BigInteger("100000000", 10);
+    /** How many "nanocoins" there are in 0.01 BitCoins. 
+     * A nanocoin is the smallest unit that can be transferred using BitCoin.
+     *  The term nanocoin is very misleading, though, because there are only 100 million 
+     *  of them in a coin (whereas one would expect 1 billion).
+     * */
+    public static final BigInteger CENT = new BigInteger("1000000", 10);
 
     private static final boolean logging;
 
@@ -58,7 +66,7 @@ public class Utils {
      * @throws ArithmeticException if you try to specify fractional nanocoins
      **/
     public static BigInteger toNanoCoins(String coins){
-    	return new BigDecimal(coins).movePointRight(9).toBigIntegerExact();
+    	return new BigDecimal(coins).movePointRight(8).toBigIntegerExact();
     }
 
     public static void uint32ToByteArrayBE(long val, byte[] out, int offset) {
