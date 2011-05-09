@@ -21,9 +21,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.Date;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.bitcoin.core.Utils.*;
 
@@ -36,6 +39,8 @@ import static com.google.bitcoin.core.Utils.*;
  * Construction is blocking whilst the protocol version is negotiated.
  */
 public class NetworkConnection {
+	private static final Logger log = LoggerFactory.getLogger(NetworkConnection.class);
+	
     static final int COMMAND_LEN = 12;
 
     // Message strings.
@@ -61,21 +66,29 @@ public class NetworkConnection {
     /**
      * Connect to the given IP address using the port specified as part of the network parameters. Once construction
      * is complete a functioning network channel is set up and running.
+     *
      * @param remoteIp IP address to connect to. IPv6 is not currently supported by BitCoin.
      * @param params Defines which network to connect to and details of the protocol.
+     * @param bestHeight How many blocks are in our best chain
+     * @param connectTimeout Timeout in milliseconds when initially connecting to peer
      * @throws IOException if there is a network related failure.
      * @throws ProtocolException if the version negotiation failed.
      */
-    public NetworkConnection(InetAddress remoteIp, NetworkParameters params) throws IOException, ProtocolException {
+    public NetworkConnection(InetAddress remoteIp, NetworkParameters params, int bestHeight, int connectTimeout)
+            throws IOException, ProtocolException {
         this.params = params;
         this.remoteIp = remoteIp;
-        socket = new Socket(remoteIp, params.port);
+        
+        InetSocketAddress address = new InetSocketAddress(remoteIp, params.port);
+        socket = new Socket();
+        socket.connect(address, connectTimeout);
+        
         out = socket.getOutputStream();
         in = socket.getInputStream();
 
         // Announce ourselves. This has to come first to connect to clients beyond v0.30.20.2 which wait to hear
         // from us until they send their version message back.
-        writeMessage(MSG_VERSION, new VersionMessage(params));
+        writeMessage(MSG_VERSION, new VersionMessage(params, bestHeight));
         // When connecting, the remote peer sends us a version message with various bits of
         // useful data in it. We need to know the peer protocol version before we can talk to it.
         versionMessage = (VersionMessage) readMessage();
@@ -86,9 +99,13 @@ public class NetworkConnection {
         readMessage();
         // Switch to the new protocol version.
         int peerVersion = versionMessage.clientVersion;
-        LOG(String.format("Connected to peer: version=%d, subVer='%s', services=0x%x, time=%s, blocks=%d",
-                peerVersion, versionMessage.subVer,
-                versionMessage.localServices, new Date(versionMessage.time * 1000).toString(), versionMessage.bestHeight));
+        log.info("Connected to peer: version={}, subVer='{}', services=0x{}, time={}, blocks={}", new Object[] {
+        		peerVersion, 
+        		versionMessage.subVer,
+                versionMessage.localServices, 
+                new Date(versionMessage.time * 1000),
+                versionMessage.bestHeight
+        });
         // BitCoinJ is a client mode implementation. That means there's not much point in us talking to other client
         // mode nodes because we can't download the data from them we need to find/verify transactions.
         if (!versionMessage.hasBlockChain())
@@ -232,8 +249,11 @@ public class NetworkConnection {
             }
         }
 
-        if (PROTOCOL_LOG)
-            LOG("Received " + size + " byte '" + command + "' message: " + Utils.bytesToHexString(payloadBytes));
+        log.debug("Received {} byte '{}' message: {}", new Object[]{
+        		size,
+        		command,
+        		Utils.bytesToHexString(payloadBytes)	
+        });
 
         try {
             Message message;
@@ -275,8 +295,7 @@ public class NetworkConnection {
             System.arraycopy(hash, 0, header, 4 + COMMAND_LEN + 4, 4);
         }
 
-        if (PROTOCOL_LOG)
-            LOG("Sending " + name + " message: " + bytesToHexString(payload));
+        log.debug("Sending {} message: {}", name, bytesToHexString(payload));
 
         // Another writeMessage call may be running concurrently.
         synchronized (out) {

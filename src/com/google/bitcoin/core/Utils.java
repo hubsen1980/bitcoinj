@@ -33,24 +33,24 @@ import java.util.Arrays;
  */
 @SuppressWarnings({"SameParameterValue"})
 public class Utils {
-    /** How many "nanocoins" there are in a BitCoin.
-     *  A nanocoin is the smallest unit that can be transferred using BitCoin.
-     *  The term nanocoin is very misleading, though, because there are only 100 million
-     *  of them in a coin (whereas one would expect 1 billion.  */
-	
-    public static final BigInteger COIN = new BigInteger("100000000", 10);
-    /** How many "nanocoins" there are in 0.01 BitCoins. 
+
+    /**
+     * How many "nanocoins" there are in a BitCoin.
+     *
      * A nanocoin is the smallest unit that can be transferred using BitCoin.
-     *  The term nanocoin is very misleading, though, because there are only 100 million 
-     *  of them in a coin (whereas one would expect 1 billion).
-     * */
+     * The term nanocoin is very misleading, though, because there are only 100 million
+     * of them in a coin (whereas one would expect 1 billion.
+     */
+    public static final BigInteger COIN = new BigInteger("100000000", 10);
+
+    /**
+     * How many "nanocoins" there are in 0.01 BitCoins.
+     *
+     * A nanocoin is the smallest unit that can be transferred using BitCoin.
+     * The term nanocoin is very misleading, though, because there are only 100 million
+     * of them in a coin (whereas one would expect 1 billion).
+     */
     public static final BigInteger CENT = new BigInteger("1000000", 10);
-
-    private static final boolean logging;
-
-    static {
-        logging = Boolean.parseBoolean(System.getProperty("bitcoinj.logging", "false"));
-    }
 
     /** Convert an amount expressed in the way humans are used to into nanocoins. */
     public static BigInteger toNanoCoins(int coins, int cents) {
@@ -69,6 +69,18 @@ public class Utils {
     	return new BigDecimal(coins).movePointRight(8).toBigIntegerExact();
     }
 
+    /**
+     * Convert an amount expressed in the way humans are used to into nanocoins.<p>
+     *
+     * This takes string in a format understood by {@link BigDecimal#BigDecimal(String)},
+     * for example "0", "1", "0.10", "1.23E3", "1234.5E-5".
+     * 
+     * @throws ArithmeticException if you try to specify fractional nanocoins
+     **/
+    public static BigInteger toNanoCoins(String coins){
+        return new BigDecimal(coins).movePointRight(8).toBigIntegerExact();
+    }
+
     public static void uint32ToByteArrayBE(long val, byte[] out, int offset) {
         out[offset + 0] = (byte) (0xFF & (val >> 24));
         out[offset + 1] = (byte) (0xFF & (val >> 16));
@@ -83,14 +95,14 @@ public class Utils {
         out[offset + 3] = (byte) (0xFF & (val >> 24));      
     }
     
-    public static void uint32ToByteStreamLE(long val,  OutputStream stream) throws IOException {
+    public static void uint32ToByteStreamLE(long val, OutputStream stream) throws IOException {
         stream.write((int)(0xFF & (val >>  0)));
         stream.write((int)(0xFF & (val >>  8)));
         stream.write((int)(0xFF & (val >> 16)));
         stream.write((int)(0xFF & (val >> 24)));
     }
     
-    public static void uint64ToByteStreamLE( BigInteger val,  OutputStream stream) throws IOException {
+    public static void uint64ToByteStreamLE(BigInteger val, OutputStream stream) throws IOException {
         byte[] bytes = val.toByteArray();
         if (bytes.length > 8) { 
             throw new RuntimeException("Input too large to encode into a uint64");
@@ -191,13 +203,9 @@ public class Utils {
                ((bytes[offset + 2] & 0xFFL) <<  8) |
                ((bytes[offset + 3] & 0xFFL) <<  0);
     }
-
-    static void LOG(String msg) {
-        // Set this to true to see debug prints from the library.
-        if (logging) {
-            System.out.print("BitCoin: ");
-            System.out.println(msg);
-        }
+    
+    public static int readUint16BE(byte[] bytes, int offset) {
+	    return ((bytes[offset] & 0xff) << 8) | bytes[offset + 1] & 0xff;
     }
 
     /**
@@ -218,9 +226,12 @@ public class Utils {
 
     /** Returns the given value in nanocoins as a 0.12 type string. */
     public static String bitcoinValueToFriendlyString(BigInteger value) {
+        boolean negative = value.compareTo(BigInteger.ZERO) < 0;
+        if (negative)
+            value = value.negate();
         BigInteger coins = value.divide(COIN);
         BigInteger cents = value.remainder(COIN);
-        return String.format("%d.%02d", coins.intValue(), cents.intValue() / 1000000);
+        return String.format("%s%d.%02d", negative ? "-" : "", coins.intValue(), cents.intValue() / 1000000);
     }
     
     /**

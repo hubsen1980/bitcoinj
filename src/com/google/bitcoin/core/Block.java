@@ -22,6 +22,9 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static com.google.bitcoin.core.Utils.*;
 
 /**
@@ -33,6 +36,7 @@ import static com.google.bitcoin.core.Utils.*;
  * or request one specifically using {@link Peer#getBlock(byte[])}, or grab one from a downloaded {@link BlockChain}.
  */
 public class Block extends Message {
+    private static final Logger log = LoggerFactory.getLogger(Block.class);
     private static final long serialVersionUID = 2738848929966035281L;
 
     /** How many bytes are required to represent a block header. */
@@ -263,8 +267,8 @@ public class Block extends Message {
         List<byte[]> tree = buildMerkleTree();
         byte[] calculatedRoot = tree.get(tree.size() - 1);
         if (!Arrays.equals(calculatedRoot, merkleRoot)) {
-            LOG("Merkle tree did not verify: ");
-            for (byte[] b : tree) LOG(Utils.bytesToHexString(b));
+            log.error("Merkle tree did not verify: ");
+            for (byte[] b : tree) log.error(Utils.bytesToHexString(b));
 
             throw new VerificationException("Merkle hashes do not match: " +
                     bytesToHexString(calculatedRoot) + " vs " + bytesToHexString(merkleRoot));
@@ -294,7 +298,7 @@ public class Block extends Message {
         ArrayList<byte[]> tree = new ArrayList<byte[]>();
         // Start by adding all the hashes of the transactions as leaves of the tree.
         for (Transaction t : transactions) {
-            tree.add(t.getHash());
+            tree.add(t.getHash().hash);
         }
         int j = 0;
         // Now step through each level ...
@@ -499,7 +503,7 @@ public class Block extends Message {
         // Real coinbase transactions use <pubkey> OP_CHECKSIG rather than a send to an address though there's
         // nothing in the system that enforces that and both are just as valid.
         coinbase.inputs.add(new TransactionInput(params, new byte[] { (byte) coinbaseCounter++ } ));
-        coinbase.outputs.add(new TransactionOutput(params, Utils.toNanoCoins(50, 0), to));
+        coinbase.outputs.add(new TransactionOutput(params, Utils.toNanoCoins(50, 0), to, coinbase));
         transactions.add(coinbase);
     }
 

@@ -16,12 +16,11 @@
 
 package com.google.bitcoin.core;
 
-import java.io.File;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
-import static com.google.bitcoin.core.Utils.LOG;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A BlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that the
@@ -48,6 +47,8 @@ import static com.google.bitcoin.core.Utils.LOG;
  * or if we connect to a peer that doesn't send us blocks in order.
  */
 public class BlockChain {
+    private static final Logger log = LoggerFactory.getLogger(BlockChain.class);
+
     /** Keeps a map of block hashes to StoredBlocks. */
     protected BlockStore blockStore;
 
@@ -80,7 +81,7 @@ public class BlockChain {
         try {
             this.blockStore = blockStore;
             chainHead = blockStore.getChainHead();
-            LOG("chain head is: " + chainHead.getHeader().toString());
+            log.info("chain head is:\n{}", chainHead.getHeader());
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);
         }
@@ -105,71 +106,163 @@ public class BlockChain {
 
     private synchronized boolean add(Block block, boolean tryConnecting)
             throws BlockStoreException, VerificationException, ScriptException {
-        try {
-            // Prove the block is internally valid: hash is lower than target, merkle root is correct and so on.
-            block.verify();
-        } catch (VerificationException e) {
-            LOG("Failed to verify block: " + e.toString());
-            LOG(block.toString());
-            throw e;
-        }
-        // If this block is a full block, scan, otherwise it's just headers (eg from getheaders or a unit test).
-        if (block.transactions != null) {
-            // Scan the transactions to find out if any sent money to us. We don't care about the rest.
-            // TODO: We should also scan to see if any of our own keys sent money to somebody else and became spent.
-            for (Transaction tx : block.transactions) {
-                try {
-                    scanTransaction(tx);
-                } catch (ScriptException e) {
-                    // We don't want scripts we don't understand to break the block chain,
-                    // so just note that this tx was not scanned here and continue.
-                    LOG("Failed to parse a script: " + e.toString());
-                }
-            }
-        }
-        // We don't need the transaction data anymore. Free up some memory.
-        block.transactions = null;
-
+        log.info("Adding block " + block.getHashAsString() + " to the chain");
         if (blockStore.get(block.getHash()) != null) {
-            LOG("Already have block");
+            log.info("Already have block");
             return true;
         }
+
+        // Prove the block is internally valid: hash is lower than target, merkle root is correct and so on.
+        try {
+            block.verify();
+        } catch (VerificationException e) {
+            log.error("Failed to verify block:", e);
+            log.error(block.toString());
+            throw e;
+        }
+
+        // Try linking it to a place in the currently known blocks.
         StoredBlock storedPrev = blockStore.get(block.getPrevBlockHash());
+
         if (storedPrev == null) {
             // We can't find the previous block. Probably we are still in the process of downloading the chain and a
             // block was solved whilst we were doing it. We put it to one side and try to connect it later when we
             // have more blocks.
-            LOG("Block does not connect: " + block.getHashAsString());
+            log.warn("Block does not connect: {}", block.getHashAsString());
             unconnectedBlocks.add(block);
             return false;
         } else {
-            // The block connects to somewhere on the chain. Not necessarily the top of the best known chain.
+            // It connects to somewhere on the chain. Not necessarily the top of the best known chain.
+            //
+            // Create a new StoredBlock from this block. It will throw away the transaction data so when block goes
+            // out of scope we will reclaim the used memory.
             checkDifficultyTransitions(storedPrev, block);
             StoredBlock newStoredBlock = storedPrev.build(block);
-            // Store it.
             blockStore.put(newStoredBlock);
-            if (storedPrev.equals(chainHead)) {
-                // This block connects to the best known block, it is a normal continuation of the system.
-                setChainHead(newStoredBlock);
-                LOG("Received block " + block.getHashAsString() + ", chain is now " + chainHead.getHeight() +
-                    " blocks high");
-            } else {
-                // This block connects to somewhere other than the top of the chain.
-                if (newStoredBlock.moreWorkThan(chainHead)) {
-                    // This chain has overtaken the one we currently believe is best. Reorganize is required.
-                    wallet.reorganize(chainHead, newStoredBlock);
-                    // Update the pointer to the best known block.
-                    setChainHead(newStoredBlock);
-                } else {
-                    LOG("Received a block which forks the chain, but it did not cause a reorganize.");
-                }
-            }
+            // block.transactions may be null here if we received only a header and not a full block. This does not
+            // happen currently but might in future if getheaders is implemented.
+            connectBlock(newStoredBlock, storedPrev, block.transactions);
         }
 
         if (tryConnecting)
             tryConnectingUnconnected();
 
         return true;
+    }
+
+    private void connectBlock(StoredBlock newStoredBlock, StoredBlock storedPrev, List<Transaction> newTransactions)
+            throws BlockStoreException, VerificationException {
+        if (storedPrev.equals(chainHead)) {
+            // This block connects to the best known block, it is a normal continuation of the system.
+            setChainHead(newStoredBlock);
+            log.info("Chain is now {} blocks high", chainHead.getHeight());
+            if (newTransactions != null)
+                sendTransactionsToWallet(newStoredBlock, NewBlockType.BEST_CHAIN, newTransactions);
+        } else {
+            // This block connects to somewhere other than the top of the best known chain. We treat these differently.
+            //
+            // Note that we send the transactions to the wallet FIRST, even if we're about to re-organize this block
+            // to become the new best chain head. This simplifies handling of the re-org in the Wallet class.
+            boolean haveNewBestChain = newStoredBlock.moreWorkThan(chainHead);
+            if (haveNewBestChain) {
+                log.info("Block is causing a re-organize");
+            } else {
+                log.info("Block forks the chain, but it did not cause a reorganize.");
+            }
+
+            // We may not have any transactions if we received only a header. That never happens today but will in
+            // future when getheaders is used as an optimization.
+            if (newTransactions != null) {
+                sendTransactionsToWallet(newStoredBlock, NewBlockType.SIDE_CHAIN, newTransactions);
+            }
+
+            if (haveNewBestChain)
+                handleNewBestChain(newStoredBlock);
+        }
+    }
+
+    /**
+     * Called as part of connecting a block when the new block results in a different chain having higher total work.
+     */
+    private void handleNewBestChain(StoredBlock newChainHead) throws BlockStoreException, VerificationException {
+        // This chain has overtaken the one we currently believe is best. Reorganize is required.
+        //
+        // Firstly, calculate the block at which the chain diverged. We only need to examine the
+        // chain from beyond this block to find differences.
+        StoredBlock splitPoint = findSplit(newChainHead, chainHead);
+        log.info("Re-organize after split at height {}", splitPoint.getHeight());
+        log.info("Old chain head: {}", chainHead.getHeader().getHashAsString());
+        log.info("New chain head: {}", newChainHead.getHeader().getHashAsString());
+        log.info("Split at block: {}", splitPoint.getHeader().getHashAsString());
+        // Then build a list of all blocks in the old part of the chain and the new part.
+        Set<StoredBlock> oldBlocks = getPartialChain(chainHead, splitPoint);
+        Set<StoredBlock> newBlocks = getPartialChain(newChainHead, splitPoint);
+        // Now inform the wallet. This is necessary so the set of currently active transactions (that we can spend)
+        // can be updated to take into account the re-organize. We might also have received new coins we didn't have
+        // before and our previous spends might have been undone.
+        wallet.reorganize(oldBlocks, newBlocks);
+        // Update the pointer to the best known block.
+        setChainHead(newChainHead);
+    }
+
+    /**
+     * Returns the set of contiguous blocks between 'higher' and 'lower'. Higher is included, lower is not.
+     */
+    private Set<StoredBlock> getPartialChain(StoredBlock higher, StoredBlock lower) throws BlockStoreException {
+        assert higher.getHeight() > lower.getHeight();
+        Set<StoredBlock> results = new HashSet<StoredBlock>();
+        StoredBlock cursor = higher;
+        while (true) {
+            results.add(cursor);
+            cursor = cursor.getPrev(blockStore);
+            assert cursor != null : "Ran off the end of the chain";
+            if (cursor.equals(lower)) break;
+        }
+        return results;
+    }
+
+    /**
+     * Locates the point in the chain at which newStoredBlock and chainHead diverge. Returns null if no split point was
+     * found (ie they are part of the same chain).
+     */
+    private StoredBlock findSplit(StoredBlock newChainHead, StoredBlock chainHead) throws BlockStoreException {
+        StoredBlock currentChainCursor = chainHead;
+        StoredBlock newChainCursor = newChainHead;
+        // Loop until we find the block both chains have in common. Example:
+        //
+        //    A -> B -> C -> D
+        //         \--> E -> F -> G
+        //
+        // findSplit will return block B. chainHead = D and newChainHead = G.
+        while (!currentChainCursor.equals(newChainCursor)) {
+            if (currentChainCursor.getHeight() > newChainCursor.getHeight()) {
+                currentChainCursor = currentChainCursor.getPrev(blockStore);
+                assert currentChainCursor != null : "Attempt to follow an orphan chain";
+            } else {
+                newChainCursor = newChainCursor.getPrev(blockStore);
+                assert newChainCursor != null : "Attempt to follow an orphan chain";
+            }
+        }
+        return currentChainCursor;
+    }
+
+    enum NewBlockType {
+        BEST_CHAIN,
+        SIDE_CHAIN
+    }
+
+    private void sendTransactionsToWallet(StoredBlock block, NewBlockType blockType,
+                                          List<Transaction> newTransactions) throws VerificationException {
+        // Scan the transactions to find out if any mention addresses we own.
+        for (Transaction tx : newTransactions) {
+            try {
+                scanTransaction(block, tx, blockType);
+            } catch (ScriptException e) {
+                // We don't want scripts we don't understand to break the block chain,
+                // so just note that this tx was not scanned here and continue.
+                log.warn("Failed to parse a script: " + e.toString());
+            }
+        }
     }
 
     private void setChainHead(StoredBlock chainHead) {
@@ -186,13 +279,14 @@ public class BlockChain {
      */
     private void tryConnectingUnconnected() throws VerificationException, ScriptException, BlockStoreException {
         // For each block in our unconnected list, try and fit it onto the head of the chain. If we succeed remove it
-        // from the list and keep going. If we changed the head of the list at the end of the round,
-        // try again until we can't fit anything else on the top.
+        // from the list and keep going. If we changed the head of the list at the end of the round try again until
+        // we can't fit anything else on the top.
         int blocksConnectedThisRound;
         do {
             blocksConnectedThisRound = 0;
-            for (int i = 0; i < unconnectedBlocks.size(); i++) {
-                Block block = unconnectedBlocks.get(i);
+            Iterator<Block> iter = unconnectedBlocks.iterator();
+            while (iter.hasNext()) {
+                Block block = iter.next();
                 // Look up the blocks previous.
                 StoredBlock prev = blockStore.get(block.getPrevBlockHash());
                 if (prev == null) {
@@ -202,12 +296,11 @@ public class BlockChain {
                 // Otherwise we can connect it now.
                 // False here ensures we don't recurse infinitely downwards when connecting huge chains.
                 add(block, false);
-                unconnectedBlocks.remove(i);
-                i--;  // The next iteration of the for loop will make "i" point to the right index again.
+                iter.remove();
                 blocksConnectedThisRound++;
             }
             if (blocksConnectedThisRound > 0) {
-                LOG("Connected " + blocksConnectedThisRound + " floating blocks.");
+                log.info("Connected {} floating blocks.", blocksConnectedThisRound);
             }
         } while (blocksConnectedThisRound > 0);
     }
@@ -253,7 +346,7 @@ public class BlockChain {
         newDifficulty = newDifficulty.divide(BigInteger.valueOf(params.targetTimespan));
 
         if (newDifficulty.compareTo(params.proofOfWorkLimit) > 0) {
-            LOG("Difficulty hit proof of work limit: " + newDifficulty.toString(16));
+            log.warn("Difficulty hit proof of work limit: {}", newDifficulty.toString(16));
             newDifficulty = params.proofOfWorkLimit;
         }
 
@@ -269,41 +362,31 @@ public class BlockChain {
                     receivedDifficulty.toString(16) + " vs " + newDifficulty.toString(16));
     }
 
-    private void scanTransaction(Transaction tx) throws ScriptException, VerificationException {
-        for (TransactionOutput i : tx.outputs) {
+    private void scanTransaction(StoredBlock block, Transaction tx, NewBlockType blockType)
+            throws ScriptException, VerificationException {
+        boolean shouldReceive = false;
+        for (TransactionOutput output : tx.outputs) {
             // TODO: Handle more types of outputs, not just regular to address outputs.
-            if (i.getScriptPubKey().isSentToIP()) return;
-            byte[] pubKeyHash;
-            pubKeyHash = i.getScriptPubKey().getPubKeyHash();
-            synchronized (wallet) {
-                for (ECKey key : wallet.keychain) {
-                    if (Arrays.equals(pubKeyHash, key.getPubKeyHash())) {
-                        // We found a transaction that sends us money.
-                        if (!wallet.isTransactionPresent(tx)) {
-                            wallet.receive(tx);
-                        }
-                    }
+            if (output.getScriptPubKey().isSentToIP()) return;
+            // This is not thread safe as a key could be removed between the call to isMine and receive.
+            if (output.isMine(wallet)) {
+                shouldReceive = true;
+            }
+        }
+
+        // Coinbase transactions don't have anything useful in their inputs (as they create coins out of thin air).
+        if (!tx.isCoinBase()) {
+            for (TransactionInput i : tx.inputs) {
+                byte[] pubkey = i.getScriptSig().getPubKey();
+                // This is not thread safe as a key could be removed between the call to isPubKeyMine and receive.
+                if (wallet.isPubKeyMine(pubkey)) {
+                    shouldReceive = true;
                 }
             }
         }
 
-        // Coinbase transactions don't have anything useful in their inputs (as they create coins out of thin air),
-        // so we can stop scanning at this point.
-        if (tx.isCoinBase()) return;
-
-        for (TransactionInput i : tx.inputs) {
-            byte[] pubkey = i.getScriptSig().getPubKey();
-            synchronized (wallet) {
-                for (ECKey key : wallet.keychain) {
-                    if (Arrays.equals(pubkey, key.getPubKey())) {
-                        // We found a transaction where we spent money.
-                        if (wallet.isTransactionPresent(tx)) {
-                            // TODO: Implement catching up with a set of pre-generated keys using the blockchain.
-                        }
-                    }
-                }
-            }
-        }
+        if (shouldReceive)
+            wallet.receive(tx, block, blockType);
     }
 
     /**

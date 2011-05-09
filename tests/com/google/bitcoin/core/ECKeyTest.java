@@ -62,11 +62,10 @@ public class ECKeyTest {
             assertTrue(key.verify(message, output));
         }
         
-        // try to sign with one key and verify with the other
+        // Try to sign with one key and verify with the other.
         byte[] message = reverseBytes(Hex.decode(
-        "11da3761e86431e4a54c176789e41f1651b324d240d599a7067bee23d328ec2a"));
+            "11da3761e86431e4a54c176789e41f1651b324d240d599a7067bee23d328ec2a"));
         assertTrue(roundtripKey.verify(message, decodedKey.sign(message)));
         assertTrue(decodedKey.verify(message, roundtripKey.sign(message)));
-        
     }
 }
