@@ -79,7 +79,7 @@ public class Wallet implements Serializable {
      * spent for the purposes of calculating our balance but their outputs are not available for spending yet. This
      * means after a spend, our balance can actually go down temporarily before going up again!
      */
-    final Map<Sha256Hash, Transaction> pending;
+    public final Map<Sha256Hash, Transaction> pending;
 
     /**
      * Map of txhash->Transactions where the Transaction has unspent outputs. These are transactions we can use
@@ -93,7 +93,7 @@ public class Wallet implements Serializable {
      * theoretically you could spend zero-conf coins and all of them would be included together. To simplify we'll
      * make people wait but it would be a good improvement to resolve this in future.
      */
-    final Map<Sha256Hash, Transaction> unspent;
+    public final Map<Sha256Hash, Transaction> unspent;
 
     /**
      * Map of txhash->Transactions where the Transactions outputs are all fully spent. They are kept separately so
@@ -103,7 +103,7 @@ public class Wallet implements Serializable {
      *
      * Transactions only appear in this map if they are part of the best chain.
      */
-    final Map<Sha256Hash, Transaction> spent;
+    public final Map<Sha256Hash, Transaction> spent;
 
     /**
      * An inactive transaction is one that is seen only in a block that is not a part of the best chain. We keep it
@@ -297,6 +297,15 @@ public class Wallet implements Serializable {
         }
     }
 
+    public synchronized void receivePendingTransaction(Transaction tx) {
+			pending.put(tx.getHash(), tx);
+			for (WalletEventListener l : eventListeners) {
+          synchronized (l) {
+              l.onPendingCoinsReceived(this, tx);
+          }
+      }
+		}
+
     /**
      * Handle when a transaction becomes newly active on the best chain, either due to receiving a new block or a
      * re-org making inactive transactions active.
@@ -385,7 +394,7 @@ public class Wallet implements Serializable {
     /**
      * Call this when we have successfully transmitted the send tx to the network, to update the wallet.
      */
-    synchronized void confirmSend(Transaction tx) {
+    public synchronized void confirmSend(Transaction tx) {
         assert !pending.containsKey(tx.getHash()) : "confirmSend called on the same transaction twice";
         log.info("confirmSend of {}", tx.getHashAsString());
         // Mark the outputs of the used transcations as spent, so we don't try and spend it again.
@@ -413,7 +422,7 @@ public class Wallet implements Serializable {
      * Transaction objects which are equal. The wallet is not updated to track its pending status or to mark the
      * coins as spent until confirmSend is called on the result.
      */
-    synchronized Transaction createSend(Address address,  BigInteger nanocoins) {
+    public synchronized Transaction createSend(Address address,  BigInteger nanocoins) {
         // For now let's just pick the first key in our keychain. In future we might want to do something else to
         // give the user better privacy here, eg in incognito mode.
         assert keychain.size() > 0 : "Can't send value without an address to use for receiving change";

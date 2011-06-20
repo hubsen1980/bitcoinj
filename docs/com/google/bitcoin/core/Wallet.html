@@ -147,6 +147,30 @@ A Wallet stores keys and a record of transactions that have not yet been spent. 
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A list of public/private EC keys owned by this user.</TD>
 </TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.util.Map&lt;<A HREF="../../../../com/google/bitcoin/core/Sha256Hash.html" title="class in com.google.bitcoin.core">Sha256Hash</A>,<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&gt;</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#pending">pending</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Map of txhash->Transactions that have not made it into the best chain yet.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.util.Map&lt;<A HREF="../../../../com/google/bitcoin/core/Sha256Hash.html" title="class in com.google.bitcoin.core">Sha256Hash</A>,<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&gt;</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#spent">spent</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Map of txhash->Transactions where the Transactions outputs are all fully spent.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.util.Map&lt;<A HREF="../../../../com/google/bitcoin/core/Sha256Hash.html" title="class in com.google.bitcoin.core">Sha256Hash</A>,<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&gt;</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#unspent">unspent</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Map of txhash->Transactions where the Transaction has unspent outputs.</TD>
+</TR>
 </TABLE>
 &nbsp;
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
@@ -188,6 +212,23 @@ A Wallet stores keys and a record of transactions that have not yet been spent. 
 
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adds the given ECKey to the wallet.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#confirmSend(com.google.bitcoin.core.Transaction)">confirmSend</A></B>(<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&nbsp;tx)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Call this when we have successfully transmitted the send tx to the network, to update the wallet.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A></CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#createSend(com.google.bitcoin.core.Address, java.math.BigInteger)">createSend</A></B>(<A HREF="../../../../com/google/bitcoin/core/Address.html" title="class in com.google.bitcoin.core">Address</A>&nbsp;address,
+           java.math.BigInteger&nbsp;nanocoins)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Statelessly creates a transaction that sends the given number of nanocoins to address.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
@@ -247,15 +288,6 @@ A Wallet stores keys and a record of transactions that have not yet been spent. 
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
-<CODE>&nbsp;boolean</CODE></FONT></TD>
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#isTransactionPresent(com.google.bitcoin.core.Transaction)">isTransactionPresent</A></B>(<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&nbsp;transaction)</CODE>
-
-<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns true if the given transaction is present in the wallet, comparing by hash value (not by object
- reference).</TD>
-</TR>
-<TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
 <CODE>static&nbsp;<A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A></CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#loadFromFile(java.io.File)">loadFromFile</A></B>(java.io.File&nbsp;f)</CODE>
 
@@ -264,11 +296,35 @@ A Wallet stores keys and a record of transactions that have not yet been spent. 
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>static&nbsp;<A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A></CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#loadFromFileStream(java.io.FileInputStream)">loadFromFileStream</A></B>(java.io.FileInputStream&nbsp;f)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns a wallet deserialied from the given file input stream.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#receivePendingTransaction(com.google.bitcoin.core.Transaction)">receivePendingTransaction</A></B>(<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&nbsp;tx)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
 <CODE>&nbsp;void</CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#saveToFile(java.io.File)">saveToFile</A></B>(java.io.File&nbsp;f)</CODE>
 
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Uses Java serialization to save the wallet to the given file.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Wallet.html#saveToFileStream(java.io.FileOutputStream)">saveToFileStream</A></B>(java.io.FileOutputStream&nbsp;f)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Uses Java serialization to save the wallet to the given file stream.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
@@ -310,6 +366,59 @@ A Wallet stores keys and a record of transactions that have not yet been spent. 
 <B>Field Detail</B></FONT></TH>
 </TR>
 </TABLE>
+
+<A NAME="pending"><!-- --></A><H3>
+pending</H3>
+<PRE>
+public final java.util.Map&lt;<A HREF="../../../../com/google/bitcoin/core/Sha256Hash.html" title="class in com.google.bitcoin.core">Sha256Hash</A>,<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&gt; <B>pending</B></PRE>
+<DL>
+<DD>Map of txhash->Transactions that have not made it into the best chain yet. They are eligible to move there but
+ are waiting for a miner to send a block on the best chain including them. These transactions inputs count as
+ spent for the purposes of calculating our balance but their outputs are not available for spending yet. This
+ means after a spend, our balance can actually go down temporarily before going up again!
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+
+<A NAME="unspent"><!-- --></A><H3>
+unspent</H3>
+<PRE>
+public final java.util.Map&lt;<A HREF="../../../../com/google/bitcoin/core/Sha256Hash.html" title="class in com.google.bitcoin.core">Sha256Hash</A>,<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&gt; <B>unspent</B></PRE>
+<DL>
+<DD>Map of txhash->Transactions where the Transaction has unspent outputs. These are transactions we can use
+ to pay other people and so count towards our balance. Transactions only appear in this map if they are part
+ of the best chain. Transactions we have broacast that are not confirmed yet appear in pending even though they
+ may have unspent "change" outputs.<p>
+
+ Note: for now we will not allow spends of transactions that did not make it into the block chain. The code
+ that handles this in BitCoin C++ is complicated. Satoshis code will not allow you to spend unconfirmed coins,
+ however, it does seem to support dependency resolution entirely within the context of the memory pool so
+ theoretically you could spend zero-conf coins and all of them would be included together. To simplify we'll
+ make people wait but it would be a good improvement to resolve this in future.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+
+<A NAME="spent"><!-- --></A><H3>
+spent</H3>
+<PRE>
+public final java.util.Map&lt;<A HREF="../../../../com/google/bitcoin/core/Sha256Hash.html" title="class in com.google.bitcoin.core">Sha256Hash</A>,<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&gt; <B>spent</B></PRE>
+<DL>
+<DD>Map of txhash->Transactions where the Transactions outputs are all fully spent. They are kept separately so
+ the time to create a spend does not grow infinitely as wallets become more used. Some of these transactions
+ may not have appeared in a block yet if they were created by us to spend coins and that spend is still being
+ worked on by miners.<p>
+
+ Transactions only appear in this map if they are part of the best chain.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
 
 <A NAME="keychain"><!-- --></A><H3>
 keychain</H3>
@@ -371,6 +480,25 @@ public void <B>saveToFile</B>(java.io.File&nbsp;f)
 </DL>
 <HR>
 
+<A NAME="saveToFileStream(java.io.FileOutputStream)"><!-- --></A><H3>
+saveToFileStream</H3>
+<PRE>
+public void <B>saveToFileStream</B>(java.io.FileOutputStream&nbsp;f)
+                      throws java.io.IOException</PRE>
+<DL>
+<DD>Uses Java serialization to save the wallet to the given file stream.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+
+<DT><B>Throws:</B>
+<DD><CODE>java.io.IOException</CODE></DL>
+</DD>
+</DL>
+<HR>
+
 <A NAME="loadFromFile(java.io.File)"><!-- --></A><H3>
 loadFromFile</H3>
 <PRE>
@@ -390,15 +518,30 @@ public static <A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="c
 </DL>
 <HR>
 
-<A NAME="isTransactionPresent(com.google.bitcoin.core.Transaction)"><!-- --></A><H3>
-isTransactionPresent</H3>
+<A NAME="loadFromFileStream(java.io.FileInputStream)"><!-- --></A><H3>
+loadFromFileStream</H3>
 <PRE>
-public boolean <B>isTransactionPresent</B>(<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&nbsp;transaction)</PRE>
+public static <A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A> <B>loadFromFileStream</B>(java.io.FileInputStream&nbsp;f)
+                                 throws java.io.IOException</PRE>
 <DL>
-<DD>Returns true if the given transaction is present in the wallet, comparing by hash value (not by object
- reference). So you can create a transaction object from scratch and get true from this method if the
- transaction is logically equal.
+<DD>Returns a wallet deserialied from the given file input stream.
 <P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+
+<DT><B>Throws:</B>
+<DD><CODE>java.io.IOException</CODE></DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="receivePendingTransaction(com.google.bitcoin.core.Transaction)"><!-- --></A><H3>
+receivePendingTransaction</H3>
+<PRE>
+public void <B>receivePendingTransaction</B>(<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&nbsp;tx)</PRE>
+<DL>
 <DD><DL>
 </DL>
 </DD>
@@ -419,6 +562,44 @@ public void <B>addEventListener</B>(<A HREF="../../../../com/google/bitcoin/core
  Threading: Event listener methods are dispatched on library provided threads and the both the wallet and the
  listener objects are locked during dispatch, so your listeners do not have to be thread safe. However they
  should not block as the Peer will be unresponsive to network traffic whilst your listener is running.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="confirmSend(com.google.bitcoin.core.Transaction)"><!-- --></A><H3>
+confirmSend</H3>
+<PRE>
+public void <B>confirmSend</B>(<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&nbsp;tx)</PRE>
+<DL>
+<DD>Call this when we have successfully transmitted the send tx to the network, to update the wallet.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="createSend(com.google.bitcoin.core.Address, java.math.BigInteger)"><!-- --></A><H3>
+createSend</H3>
+<PRE>
+public <A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A> <B>createSend</B>(<A HREF="../../../../com/google/bitcoin/core/Address.html" title="class in com.google.bitcoin.core">Address</A>&nbsp;address,
+                              java.math.BigInteger&nbsp;nanocoins)</PRE>
+<DL>
+<DD>Statelessly creates a transaction that sends the given number of nanocoins to address. The change is sent to
+ the first address in the wallet, so you must have added at least one key.<p>
+
+ This method is stateless in the sense that calling it twice with the same inputs will result in two
+ Transaction objects which are equal. The wallet is not updated to track its pending status or to mark the
+ coins as spent until confirmSend is called on the result.
 <P>
 <DD><DL>
 </DL>

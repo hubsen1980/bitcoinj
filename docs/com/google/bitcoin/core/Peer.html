@@ -116,9 +116,10 @@ A Peer handles the high level communication with a BitCoin node. It requires a N
 <B>Constructor Summary</B></FONT></TH>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Peer.html#Peer(com.google.bitcoin.core.NetworkParameters, com.google.bitcoin.core.NetworkConnection, com.google.bitcoin.core.BlockChain)">Peer</A></B>(<A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;params,
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Peer.html#Peer(com.google.bitcoin.core.NetworkParameters, com.google.bitcoin.core.NetworkConnection, com.google.bitcoin.core.BlockChain, com.google.bitcoin.core.Wallet)">Peer</A></B>(<A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;params,
      <A HREF="../../../../com/google/bitcoin/core/NetworkConnection.html" title="class in com.google.bitcoin.core">NetworkConnection</A>&nbsp;conn,
-     <A HREF="../../../../com/google/bitcoin/core/BlockChain.html" title="class in com.google.bitcoin.core">BlockChain</A>&nbsp;blockChain)</CODE>
+     <A HREF="../../../../com/google/bitcoin/core/BlockChain.html" title="class in com.google.bitcoin.core">BlockChain</A>&nbsp;blockChain,
+     <A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>&nbsp;wallet)</CODE>
 
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Construct a peer that handles the given network connection and reads/writes from the given block chain.</TD>
@@ -132,6 +133,14 @@ A Peer handles the high level communication with a BitCoin node. It requires a N
 <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
 <TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
 <B>Method Summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Peer.html#broadcastTransaction(com.google.bitcoin.core.Transaction)">broadcastTransaction</A></B>(<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&nbsp;tx)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Send the given Transaction, ie, make a payment with BitCoins.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
@@ -188,12 +197,13 @@ A Peer handles the high level communication with a BitCoin node. It requires a N
 </TR>
 </TABLE>
 
-<A NAME="Peer(com.google.bitcoin.core.NetworkParameters, com.google.bitcoin.core.NetworkConnection, com.google.bitcoin.core.BlockChain)"><!-- --></A><H3>
+<A NAME="Peer(com.google.bitcoin.core.NetworkParameters, com.google.bitcoin.core.NetworkConnection, com.google.bitcoin.core.BlockChain, com.google.bitcoin.core.Wallet)"><!-- --></A><H3>
 Peer</H3>
 <PRE>
 public <B>Peer</B>(<A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core">NetworkParameters</A>&nbsp;params,
             <A HREF="../../../../com/google/bitcoin/core/NetworkConnection.html" title="class in com.google.bitcoin.core">NetworkConnection</A>&nbsp;conn,
-            <A HREF="../../../../com/google/bitcoin/core/BlockChain.html" title="class in com.google.bitcoin.core">BlockChain</A>&nbsp;blockChain)</PRE>
+            <A HREF="../../../../com/google/bitcoin/core/BlockChain.html" title="class in com.google.bitcoin.core">BlockChain</A>&nbsp;blockChain,
+            <A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>&nbsp;wallet)</PRE>
 <DL>
 <DD>Construct a peer that handles the given network connection and reads/writes from the given block chain. Note that
  communication won't occur until you call start().
@@ -236,6 +246,23 @@ public java.util.concurrent.Future&lt;<A HREF="../../../../com/google/bitcoin/co
 <P>
 <DD><DL>
 <DT><B>Parameters:</B><DD><CODE>blockHash</CODE> - Hash of the block you wareare requesting.
+<DT><B>Throws:</B>
+<DD><CODE>java.io.IOException</CODE></DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="broadcastTransaction(com.google.bitcoin.core.Transaction)"><!-- --></A><H3>
+broadcastTransaction</H3>
+<PRE>
+public void <B>broadcastTransaction</B>(<A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&nbsp;tx)
+                          throws java.io.IOException</PRE>
+<DL>
+<DD>Send the given Transaction, ie, make a payment with BitCoins. To create a transaction you can broadcast, use
+ a <A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core"><CODE>Wallet</CODE></A>. After the broadcast completes, confirm the send using the wallet confirmSend() method.
+<P>
+<DD><DL>
+
 <DT><B>Throws:</B>
 <DD><CODE>java.io.IOException</CODE></DL>
 </DD>

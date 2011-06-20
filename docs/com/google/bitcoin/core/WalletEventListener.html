@@ -154,6 +154,15 @@ Implementing a subclass WalletEventListener allows you to learn when the content
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
 <CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/WalletEventListener.html#onPendingCoinsReceived(com.google.bitcoin.core.Wallet, com.google.bitcoin.core.Transaction)">onPendingCoinsReceived</A></B>(<A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>&nbsp;wallet,
+                       <A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&nbsp;tx)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is called on a Peer thread when an unverified transaction is received that sends some coins to you.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/WalletEventListener.html#onReorganize()">onReorganize</A></B>()</CODE>
 
 <BR>
@@ -214,6 +223,22 @@ public void <B>onCoinsReceived</B>(<A HREF="../../../../com/google/bitcoin/core/
 <P>
 <DD><DL>
 <DT><B>Parameters:</B><DD><CODE>wallet</CODE> - The wallet object that received the coins/<DD><CODE>tx</CODE> - The transaction which sent us the coins.<DD><CODE>prevBalance</CODE> - Balance before the coins were received.<DD><CODE>newBalance</CODE> - Current balance of the wallet.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="onPendingCoinsReceived(com.google.bitcoin.core.Wallet, com.google.bitcoin.core.Transaction)"><!-- --></A><H3>
+onPendingCoinsReceived</H3>
+<PRE>
+public void <B>onPendingCoinsReceived</B>(<A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>&nbsp;wallet,
+                                   <A HREF="../../../../com/google/bitcoin/core/Transaction.html" title="class in com.google.bitcoin.core">Transaction</A>&nbsp;tx)</PRE>
+<DL>
+<DD>This is called on a Peer thread when an unverified transaction is received that sends some coins to you.
+ This is mainly useful to update your view within a few seconds and give some feedback to ther user that
+ that something has happened, even if we haven't verified the transaction with a block yet.
+<P>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>wallet</CODE> - The wallet object that received the coins/<DD><CODE>tx</CODE> - The pending transaction</DL>
 </DD>
 </DL>
 <HR>

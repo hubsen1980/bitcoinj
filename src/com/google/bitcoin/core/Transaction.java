@@ -43,9 +43,12 @@ public class Transaction extends Message implements Serializable {
 
     // These are serialized in both bitcoin and java serialization.
     long version;
-    ArrayList<TransactionInput> inputs;
-    ArrayList<TransactionOutput> outputs;
+    public ArrayList<TransactionInput> inputs;
+    public ArrayList<TransactionOutput> outputs;
     long lockTime;
+
+		// This is only serialized in java
+		public Date updatedAt;
 
     // This is only stored in Java serialization. It records which blocks (and their height + work) the transaction
     // has been included in. For most transactions this set will have a single member. In the case of a chain split a
@@ -64,6 +67,7 @@ public class Transaction extends Message implements Serializable {
         version = 1;
         inputs = new ArrayList<TransactionInput>();
         outputs = new ArrayList<TransactionOutput>();
+				updatedAt = new Date();
         // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
     }
 
@@ -108,11 +112,34 @@ public class Transaction extends Message implements Serializable {
         this.hash = hash;
     }
 
+		public boolean sent(Wallet wallet) {
+			boolean sent = false;
+			for (TransactionInput in : inputs) {
+				if (in.isMine(wallet)) {
+					return true;
+				}
+			}
+			return false;
+		}
+		
+		public boolean received(Wallet wallet) {
+			return !sent(wallet);
+		}
+		
+		public BigInteger amount(Wallet wallet) throws ScriptException {
+			if (sent(wallet)) {
+				return getValueSentFromMe(wallet).subtract(getValueSentToMe(wallet));
+			} else {
+				return getValueSentToMe(wallet);
+			}
+		}
+		
+
     /**
      * Calculates the sum of the outputs that are sending coins to a key in the wallet. The flag controls whether to
      * include spent outputs or not.
      */
-    BigInteger getValueSentToMe(Wallet wallet, boolean includeSpent) {
+    public BigInteger getValueSentToMe(Wallet wallet, boolean includeSpent) {
         // This is tested in WalletTest.
         BigInteger v = BigInteger.ZERO;
         for (TransactionOutput o : outputs) {
@@ -236,6 +263,32 @@ public class Transaction extends Message implements Serializable {
         // Store a hash, it may come in useful later (want to avoid reserialization costs).
         hash = new Sha256Hash(reverseBytes(doubleDigest(bytes, offset, cursor - offset)));
     }
+
+		public boolean isMine(Wallet wallet) {
+			try {
+	      for (TransactionOutput output : this.outputs) {
+	          // TODO: Handle more types of outputs, not just regular to address outputs.
+	          if (output.getScriptPubKey().isSentToIP()) continue;
+	          // This is not thread safe as a key could be removed between the call to isMine and receive.
+	          if (output.isMine(wallet)) {
+								return true;
+	          }
+	      }
+
+      
+				for (TransactionInput input : this.inputs) {
+						if (input.getScriptSig().isSentToIP()) continue;
+				    // This is not thread safe as a key could be removed between the call to isPubKeyMine and receive.
+				    if (input.isMine(wallet)) {
+								return true;
+				    }
+				}
+				return false;
+			} catch (ScriptException e) {
+				return false;
+			}
+		}
+
 
     /**
      * A coinbase transaction is one that creates a new coin. They are the first transaction in each block and their

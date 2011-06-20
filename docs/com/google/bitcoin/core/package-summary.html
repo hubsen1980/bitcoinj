@@ -115,6 +115,13 @@ Package com.google.bitcoin.core
 <TD>A custom form of base58 is used to encode BitCoin addresses.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
+<TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/BitcoinSerializer.html" title="class in com.google.bitcoin.core">BitcoinSerializer</A></B></TD>
+<TD>Methods to serialize and de-serialize messages to the bitcoin network format as defined in the bitcoin protocol
+ specification at https://en.bitcoin.it/wiki/Protocol_specification
+
+ To be able to serialize and deserialize new Message subclasses the following criteria needs to be met.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/Block.html" title="class in com.google.bitcoin.core">Block</A></B></TD>
 <TD>A block is the foundation of the BitCoin system.</TD>
 </TR>
@@ -124,12 +131,20 @@ Package com.google.bitcoin.core
  chain follows the rules of the <A HREF="../../../../com/google/bitcoin/core/NetworkParameters.html" title="class in com.google.bitcoin.core"><CODE>NetworkParameters</CODE></A> for this chain.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
+<TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/BoundedOverheadBlockStore.html" title="class in com.google.bitcoin.core">BoundedOverheadBlockStore</A></B></TD>
+<TD>Stores the block chain to disk.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/DiskBlockStore.html" title="class in com.google.bitcoin.core">DiskBlockStore</A></B></TD>
 <TD>Stores the block chain to disk but still holds it in memory.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/DnsDiscovery.html" title="class in com.google.bitcoin.core">DnsDiscovery</A></B></TD>
 <TD>Supports peer discovery through DNS.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/DumpedPrivateKey.html" title="class in com.google.bitcoin.core">DumpedPrivateKey</A></B></TD>
+<TD>Parses and generates private keys in the form used by the Bitcoin "dumpprivkey" command.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/ECKey.html" title="class in com.google.bitcoin.core">ECKey</A></B></TD>
@@ -154,6 +169,10 @@ Package com.google.bitcoin.core
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/IrcDiscovery.html" title="class in com.google.bitcoin.core">IrcDiscovery</A></B></TD>
 <TD>IrcDiscovery provides a way to find network peers by joining a pre-agreed rendevouz point on the LFnet IRC network.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/ListMessage.html" title="class in com.google.bitcoin.core">ListMessage</A></B></TD>
+<TD>Abstract superclass of classes with list based payload, i.e.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/MemoryBlockStore.html" title="class in com.google.bitcoin.core">MemoryBlockStore</A></B></TD>
@@ -182,8 +201,16 @@ Package com.google.bitcoin.core
  a peer in the BitCoin P2P network.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
+<TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/Ping.html" title="class in com.google.bitcoin.core">Ping</A></B></TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/Script.html" title="class in com.google.bitcoin.core">Script</A></B></TD>
 <TD>BitCoin transactions don't specify what they do directly.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/SeedPeers.html" title="class in com.google.bitcoin.core">SeedPeers</A></B></TD>
+<TD>SeedPeers stores a pre-determined list of Bitcoin node addresses.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/Sha256Hash.html" title="class in com.google.bitcoin.core">Sha256Hash</A></B></TD>
@@ -223,6 +250,14 @@ Package com.google.bitcoin.core
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/VarInt.html" title="class in com.google.bitcoin.core">VarInt</A></B></TD>
 <TD>&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/VersionAck.html" title="class in com.google.bitcoin.core">VersionAck</A></B></TD>
+<TD>The verack message, sent by a client accepting the version message they received from their peer.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/VersionedChecksummedBytes.html" title="class in com.google.bitcoin.core">VersionedChecksummedBytes</A></B></TD>
+<TD>In Bitcoin the following format is often used to represent some type of key:</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD WIDTH="15%"><B><A HREF="../../../../com/google/bitcoin/core/VersionMessage.html" title="class in com.google.bitcoin.core">VersionMessage</A></B></TD>
