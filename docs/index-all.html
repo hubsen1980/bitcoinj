@@ -691,6 +691,9 @@ Variable in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/Mes
 <DT><A HREF="./com/google/bitcoin/core/WalletEventListener.html#onCoinsReceived(com.google.bitcoin.core.Wallet, com.google.bitcoin.core.Transaction, java.math.BigInteger, java.math.BigInteger)"><B>onCoinsReceived(Wallet, Transaction, BigInteger, BigInteger)</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/WalletEventListener.html" title="class in com.google.bitcoin.core">WalletEventListener</A>
 <DD>This is called on a Peer thread when a block is received that sends some coins to you.
+<DT><A HREF="./com/google/bitcoin/core/WalletEventListener.html#onCoinsSent(com.google.bitcoin.core.Wallet, com.google.bitcoin.core.Transaction, java.math.BigInteger, java.math.BigInteger)"><B>onCoinsSent(Wallet, Transaction, BigInteger, BigInteger)</B></A> - 
+Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/WalletEventListener.html" title="class in com.google.bitcoin.core">WalletEventListener</A>
+<DD>This is called when a transaction you sent is confirmed in the blockchain.
 <DT><A HREF="./com/google/bitcoin/core/WalletEventListener.html#onDeadTransaction(com.google.bitcoin.core.Transaction, com.google.bitcoin.core.Transaction)"><B>onDeadTransaction(Transaction, Transaction)</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/WalletEventListener.html" title="class in com.google.bitcoin.core">WalletEventListener</A>
 <DD>This is called on a Peer thread when a transaction becomes <i>dead</i>.
@@ -702,7 +705,7 @@ Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/IrcDi
 <DD>&nbsp;
 <DT><A HREF="./com/google/bitcoin/core/WalletEventListener.html#onPendingCoinsReceived(com.google.bitcoin.core.Wallet, com.google.bitcoin.core.Transaction)"><B>onPendingCoinsReceived(Wallet, Transaction)</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/WalletEventListener.html" title="class in com.google.bitcoin.core">WalletEventListener</A>
-<DD>This is called on a Peer thread when an unverified transaction is received that sends some coins to you.
+<DD>This is called when an unverified transaction is received that sends some coins to you.
 <DT><A HREF="./com/google/bitcoin/core/WalletEventListener.html#onReorganize()"><B>onReorganize()</B></A> - 
 Method in class com.google.bitcoin.core.<A HREF="./com/google/bitcoin/core/WalletEventListener.html" title="class in com.google.bitcoin.core">WalletEventListener</A>
 <DD>This is called on a Peer thread when a block is received that triggers a block chain re-organization.

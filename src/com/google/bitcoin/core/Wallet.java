@@ -290,10 +290,14 @@ public class Wallet implements Serializable {
         // Inform anyone interested that we have new coins. Note: we may be re-entered by the event listener,
         // so we must not make assumptions about our state after this loop returns! For example,
         // the balance we just received might already be spent!
-        if (!reorg && bestChain && valueDifference.compareTo(BigInteger.ZERO) > 0) {
+        if (!reorg && bestChain) {
             for (WalletEventListener l : eventListeners) {
                 synchronized (l) {
-                    l.onCoinsReceived(this, tx, prevBalance, getBalance());
+                    if (valueDifference.compareTo(BigInteger.ZERO) > 0) {
+                        l.onCoinsReceived(this, tx, prevBalance, getBalance());
+                    } else {
+                        l.onCoinsSent(this, tx, prevBalance, getBalance());
+                    }
                 }
             }
         }
