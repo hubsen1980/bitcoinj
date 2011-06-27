@@ -209,16 +209,6 @@ public class WalletTest {
         assertEquals(nanos, send2.getValueSentFromMe(wallet));
     }
 
-		@Test
-		public void testPendingUpdatesCorrectlyInWallet() throws Exception {
-			BigInteger nanos = Utils.toNanoCoins(1, 0);
-			assertEquals(0, wallet.pending.size());
-      Transaction send1 = wallet.createSend(new ECKey().toAddress(params), nanos);
-			assertEquals(1, wallet.pending.size());
-			wallet.receive(send1, null, BlockChain.NewBlockType.BEST_CHAIN);
-			assertEquals(0, wallet.pending.size());
-		}
-
     @Test
     public void testFinneyAttack() throws Exception {
         // A Finney attack is where a miner includes a transaction spending coins to themselves but does not

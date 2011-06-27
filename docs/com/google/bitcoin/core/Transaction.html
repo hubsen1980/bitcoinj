@@ -251,6 +251,15 @@ A transaction represents the movement of coins from some addresses to some other
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.util.Set&lt;<A HREF="../../../../com/google/bitcoin/core/StoredBlock.html" title="class in com.google.bitcoin.core">StoredBlock</A>&gt;</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Transaction.html#getAppearsIn()">getAppearsIn</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns a set of blocks which contain the transaction, or null if this transaction doesn't have that data
+ because it's not stored in the wallet or because it has never appeared in a block.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
 <CODE>&nbsp;<A HREF="../../../../com/google/bitcoin/core/Sha256Hash.html" title="class in com.google.bitcoin.core">Sha256Hash</A></CODE></FONT></TD>
 <TD><CODE><B><A HREF="../../../../com/google/bitcoin/core/Transaction.html#getHash()">getHash</A></B>()</CODE>
 
@@ -593,6 +602,23 @@ getValueSentToMe</H3>
 public java.math.BigInteger <B>getValueSentToMe</B>(<A HREF="../../../../com/google/bitcoin/core/Wallet.html" title="class in com.google.bitcoin.core">Wallet</A>&nbsp;wallet)</PRE>
 <DL>
 <DD>Calculates the sum of the outputs that are sending coins to a key in the wallet.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getAppearsIn()"><!-- --></A><H3>
+getAppearsIn</H3>
+<PRE>
+public java.util.Set&lt;<A HREF="../../../../com/google/bitcoin/core/StoredBlock.html" title="class in com.google.bitcoin.core">StoredBlock</A>&gt; <B>getAppearsIn</B>()</PRE>
+<DL>
+<DD>Returns a set of blocks which contain the transaction, or null if this transaction doesn't have that data
+ because it's not stored in the wallet or because it has never appeared in a block.
 <P>
 <DD><DL>
 </DL>
