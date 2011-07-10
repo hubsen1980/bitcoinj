@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.core;
+package com.google.bitcoin.discovery;
 
+import com.google.bitcoin.core.NetworkParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.*;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Vector;
 
 /**
  * Supports peer discovery through DNS.<p>
@@ -38,7 +38,12 @@ public class DnsDiscovery implements PeerDiscovery {
 
     private String[] hostNames;
     private NetworkParameters netParams;
-    private static final String[] defaultHosts = new String[] {"bitseed.xf2.org","bitseed.bitcoin.org.uk"};
+
+    public static final String[] defaultHosts = new String[] {
+            "dnsseed.bluematt.me",      // Auto generated
+            "bitseed.xf2.org",          // Static
+            "bitseed.bitcoin.org.uk"    // Static
+    };
     
     /**
      * Supports finding peers through DNS A records. Community run DNS entry points will be used.

@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-package com.google.bitcoin.core;
+package com.google.bitcoin.store;
+
+import com.google.bitcoin.core.Sha256Hash;
+import com.google.bitcoin.core.StoredBlock;
 
 /**
  * An implementor of BlockStore saves StoredBlock objects to disk. Different implementations store them in
@@ -38,7 +41,7 @@ public interface BlockStore {
      * Returns the StoredBlock given a hash. The returned values block.getHash() method will be equal to the
      * parameter. If no such block is found, returns null.
      */
-    StoredBlock get(byte[] hash) throws BlockStoreException;
+    StoredBlock get(Sha256Hash hash) throws BlockStoreException;
 
     /**
      * Returns the {@link StoredBlock} that represents the top of the chain of greatest total work.

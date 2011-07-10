@@ -16,6 +16,9 @@
 
 package com.google.bitcoin.core;
 
+import com.google.bitcoin.store.BlockStore;
+import com.google.bitcoin.store.BlockStoreException;
+import com.google.bitcoin.store.MemoryBlockStore;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -32,10 +35,11 @@ public class WalletTest {
     private Address myAddress;
     private Wallet wallet;
     private BlockStore blockStore;
+    private ECKey myKey;
 
     @Before
     public void setUp() throws Exception {
-        ECKey myKey = new ECKey();
+        myKey = new ECKey();
         myAddress = myKey.toAddress(params);
         wallet = new Wallet(params);
         wallet.addKey(myKey);
@@ -82,7 +86,7 @@ public class WalletTest {
     }
 
     @Test
-    public void testBasicSpending() throws Exception {
+    public void basicSpending() throws Exception {
         // We'll set up a wallet that receives a coin, then sends a coin of lesser value and keeps the change.
         BigInteger v1 = Utils.toNanoCoins(1, 0);
         Transaction t1 = createFakeTx(v1, myAddress);
@@ -102,7 +106,7 @@ public class WalletTest {
     }
 
     @Test
-    public void testSideChain() throws Exception {
+    public void sideChain() throws Exception {
         // The wallet receives a coin on the main chain, then on a side chain. Only main chain counts towards balance.
         BigInteger v1 = Utils.toNanoCoins(1, 0);
         Transaction t1 = createFakeTx(v1, myAddress);
@@ -118,7 +122,7 @@ public class WalletTest {
     }
 
     @Test
-    public void testListener() throws Exception {
+    public void listeners() throws Exception {
         final Transaction fakeTx = createFakeTx(Utils.toNanoCoins(1, 0), myAddress);
         final boolean[] didRun = new boolean[1];
         WalletEventListener listener = new WalletEventListener() {
@@ -136,7 +140,7 @@ public class WalletTest {
     }
 
     @Test
-    public void testBalance() throws Exception {
+    public void balance() throws Exception {
         // Receive 5 coins then half a coin.
         BigInteger v1 = toNanoCoins(5, 0);
         BigInteger v2 = toNanoCoins(0, 50);
@@ -175,7 +179,7 @@ public class WalletTest {
     // suite.
 
     @Test
-    public void testBlockChainCatchup() throws Exception {
+    public void blockChainCatchup() throws Exception {
         Transaction tx1 = createFakeTx(Utils.toNanoCoins(1, 0), myAddress);
         StoredBlock b1 = createFakeBlock(tx1).storedBlock;
         wallet.receive(tx1, b1, BlockChain.NewBlockType.BEST_CHAIN);
@@ -197,7 +201,7 @@ public class WalletTest {
     }
 
     @Test
-    public void testBalances() throws Exception {
+    public void balances() throws Exception {
         BigInteger nanos = Utils.toNanoCoins(1, 0);
         Transaction tx1 = createFakeTx(nanos, myAddress);
         wallet.receive(tx1, null, BlockChain.NewBlockType.BEST_CHAIN);
@@ -210,7 +214,24 @@ public class WalletTest {
     }
 
     @Test
-    public void testFinneyAttack() throws Exception {
+    public void transactions() throws Exception {
+        // This test covers a bug in which Transaction.getValueSentFromMe was calculating incorrectly.
+        Transaction tx = createFakeTx(Utils.toNanoCoins(1, 0), myAddress);
+        // Now add another output (ie, change) that goes to some other address.
+        Address someOtherGuy = new ECKey().toAddress(params);
+        TransactionOutput output = new TransactionOutput(params, tx, Utils.toNanoCoins(0, 5), someOtherGuy);
+        tx.addOutput(output);
+        wallet.receive(tx, null, BlockChain.NewBlockType.BEST_CHAIN);
+        // Now the other guy creates a transaction which spends that change.
+        Transaction tx2 = new Transaction(params);
+        tx2.addInput(output);
+        tx2.addOutput(new TransactionOutput(params, tx2, Utils.toNanoCoins(0, 5), myAddress));
+        // tx2 doesn't send any coins from us, even though the output is in the wallet.
+        assertEquals(Utils.toNanoCoins(0, 0), tx2.getValueSentFromMe(wallet));
+    }
+
+    @Test
+    public void finneyAttack() throws Exception {
         // A Finney attack is where a miner includes a transaction spending coins to themselves but does not
         // broadcast it. When they find a solved block, they hold it back temporarily whilst they buy something with
         // those same coins. After purchasing, they broadcast the block thus reversing the transaction. It can be

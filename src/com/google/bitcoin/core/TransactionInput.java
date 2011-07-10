@@ -93,9 +93,7 @@ public class TransactionInput extends Message implements Serializable {
      * Coinbase transactions have special inputs with hashes of zero. If this is such an input, returns true.
      */
     public boolean isCoinBase() {
-        for (int i = 0; i < outpoint.hash.length; i++)
-            if (outpoint.hash[i] != 0) return false;
-        return true;
+        return outpoint.hash.equals(Sha256Hash.ZERO_HASH);
     }
 
     /**
@@ -157,8 +155,7 @@ public class TransactionInput extends Message implements Serializable {
      * @return The TransactionOutput or null if the transactions map doesn't contain the referenced tx.
      */
     TransactionOutput getConnectedOutput(Map<Sha256Hash, Transaction> transactions) {
-        Sha256Hash h = new Sha256Hash(outpoint.hash);
-        Transaction tx = transactions.get(h);
+        Transaction tx = transactions.get(outpoint.hash);
         if (tx == null)
             return null;
         TransactionOutput out = tx.outputs.get((int)outpoint.index);
@@ -174,8 +171,7 @@ public class TransactionInput extends Message implements Serializable {
      * @return true if connection took place, false if the referenced transaction was not in the list.
      */
     ConnectionResult connect(Map<Sha256Hash, Transaction> transactions, boolean disconnect) {
-        Sha256Hash h = new Sha256Hash(outpoint.hash);
-        Transaction tx = transactions.get(h);
+        Transaction tx = transactions.get(outpoint.hash);
         if (tx == null)
             return TransactionInput.ConnectionResult.NO_SUCH_TX;
         TransactionOutput out = tx.outputs.get((int)outpoint.index);

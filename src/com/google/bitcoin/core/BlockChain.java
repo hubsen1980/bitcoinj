@@ -19,6 +19,8 @@ package com.google.bitcoin.core;
 import java.math.BigInteger;
 import java.util.*;
 
+import com.google.bitcoin.store.BlockStore;
+import com.google.bitcoin.store.BlockStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +65,7 @@ public class BlockChain {
     protected StoredBlock chainHead;
 
     protected final NetworkParameters params;
-    protected final Wallet wallet;
+    protected final List<Wallet> wallets;
 
     // Holds blocks that we have received but can't plug into the chain yet, eg because they were created whilst we
     // were downloading the block chain.
@@ -74,10 +76,27 @@ public class BlockChain {
      * one from scratch, or you can deserialize a saved wallet from disk using {@link Wallet#loadFromFile(java.io.File)}
      * <p>
      *
-     * For the store you can use a {@link MemoryBlockStore} if you don't care about saving the downloaded data, or a
-     * {@link BoundedOverheadBlockStore} if you'd like to ensure fast startup the next time you run the program.
+     * For the store you can use a {@link com.google.bitcoin.store.MemoryBlockStore} if you don't care about saving the downloaded data, or a
+     * {@link com.google.bitcoin.store.BoundedOverheadBlockStore} if you'd like to ensure fast startup the next time you run the program.
      */
     public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) {
+        this(params, new ArrayList<Wallet>(), blockStore);
+        if (wallet != null)
+            addWallet(wallet);
+    }
+
+    /**
+     * Constructs a BlockChain that has no wallet at all. This is helpful when you don't actually care about sending
+     * and receiving coins but rather, just want to explore the network data structures.
+     */
+    public BlockChain(NetworkParameters params, BlockStore blockStore) {
+        this(params, new ArrayList<Wallet>(), blockStore);
+    }
+    
+    /**
+     * Constructs a BlockChain connected to the given list of wallets and a store. 
+     */
+    public BlockChain(NetworkParameters params, List<Wallet> wallets, BlockStore blockStore){
         try {
             this.blockStore = blockStore;
             chainHead = blockStore.getChainHead();
@@ -85,9 +104,17 @@ public class BlockChain {
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);
         }
-
         this.params = params;
-        this.wallet = wallet;
+        this.wallets = new ArrayList<Wallet>(wallets);
+    }
+
+    /**
+     * Add a wallet to the BlockChain. Note that the wallet will be unaffected by any blocks received while it
+     * was not part of this BlockChain. This method is useful if the wallet has just been created, and its keys 
+     * have never been in use, or if the wallet has been loaded along with the BlockChain
+     */
+    public synchronized void addWallet(Wallet wallet) {
+        wallets.add(wallet);
     }
 
     /**
@@ -212,10 +239,12 @@ public class BlockChain {
         // Then build a list of all blocks in the old part of the chain and the new part.
         List<StoredBlock> oldBlocks = getPartialChain(chainHead, splitPoint);
         List<StoredBlock> newBlocks = getPartialChain(newChainHead, splitPoint);
-        // Now inform the wallet. This is necessary so the set of currently active transactions (that we can spend)
+        // Now inform the wallets. This is necessary so the set of currently active transactions (that we can spend)
         // can be updated to take into account the re-organize. We might also have received new coins we didn't have
         // before and our previous spends might have been undone.
-        wallet.reorganize(oldBlocks, newBlocks);
+        for (Wallet wallet : wallets) {
+            wallet.reorganize(oldBlocks, newBlocks);
+        }
         // Update the pointer to the best known block.
         setChainHead(newChainHead);
     }
@@ -380,12 +409,33 @@ public class BlockChain {
                     receivedDifficulty.toString(16) + " vs " + newDifficulty.toString(16));
     }
 
-    private void scanTransaction(StoredBlock block, Transaction tx, NewBlockType blockType) throws ScriptException, VerificationException {
-        // Coinbase transactions don't have anything useful in their inputs (as they create coins out of thin air).
-        if (tx.isMine(wallet) && !tx.isCoinBase()) {
-            System.out.println("======> RECEIVING"+tx.toString());
-            wallet.receive(tx, block, blockType);
-        }
+    private void scanTransaction(StoredBlock block, Transaction tx, NewBlockType blockType)
+            throws ScriptException, VerificationException {
+        for (Wallet wallet : wallets) {
+            boolean shouldReceive = false;
+            for (TransactionOutput output : tx.outputs) {
+                // TODO: Handle more types of outputs, not just regular to address outputs.
+                if (output.getScriptPubKey().isSentToIP()) return;
+                // This is not thread safe as a key could be removed between the call to isMine and receive.
+                if (output.isMine(wallet)) {
+                    shouldReceive = true;
+                }
+            }
+    
+            // Coinbase transactions don't have anything useful in their inputs (as they create coins out of thin air).
+            if (!tx.isCoinBase()) {
+                for (TransactionInput i : tx.inputs) {
+                    byte[] pubkey = i.getScriptSig().getPubKey();
+                    // This is not thread safe as a key could be removed between the call to isPubKeyMine and receive.
+                    if (wallet.isPubKeyMine(pubkey)) {
+                        shouldReceive = true;
+                    }
+                }
+            }
+    
+            if (shouldReceive)
+                wallet.receive(tx, block, blockType);
+            }
     }
 
     /**
